@@ -40,6 +40,12 @@ const userSchema = new mongoose.Schema({
       ref: "Post"
     }
   ],
+  liked: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "Post"
+    }
+  ],
   profilePicture: {
     type: String
   }
