@@ -3,7 +3,7 @@ import { User as userModel } from "../models/user-model.js";
 import ApiError from "../utils/ApiError.js"
 import ApiResponse from "../utils/ApiResponse.js";
 import { uploadToCloudinary } from "../utils/cloudinary-config.js"
-import { cookieConfig } from "../utils/Constants.js";
+import { cookieConfig, defaultProfilePictureUri } from "../utils/Constants.js";
 
 const generateAccessAndRefreshTokens = AsyncHandler(async (userId) => {
   const user = await userModel.findById(userId).select("-password -refreshToken")
@@ -43,12 +43,13 @@ const registerUser = AsyncHandler(async (req, res) => {
   }
 
   let profilePictureLocal;
+  let profilePicture;
   if (req?.files?.profilePicture && req.files.profilePicture.length > 0) {
     profilePictureLocal = req.files.profilePicture[0].path;
+    profilePicture = await uploadToCloudinary(profilePictureLocal);
   } else {
-    profilePictureLocal = "./public/images/defaultProfilePicture.jpg";
+    profilePicture = defaultProfilePictureUri
   }
-  const profilePicture = await uploadToCloudinary(profilePictureLocal);
 
   const createdUser = await userModel.create({
     name, username, password, mail, profilePicture
@@ -113,8 +114,8 @@ const signOut = AsyncHandler(async (req, res) => {
   )
 
   res.status(200)
-    .clearCookie("accessToken",cookieConfig)
-    .clearCookie("refreshToken",cookieConfig)
+    .clearCookie("accessToken", cookieConfig)
+    .clearCookie("refreshToken", cookieConfig)
     .json(
       new ApiResponse(200, "sign out complete", {})
     )
