@@ -5,24 +5,22 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { uploadToCloudinary } from "../utils/cloudinary-config.js"
 import { cookieConfig, defaultProfilePictureUri } from "../utils/Constants.js";
 
-const generateAccessAndRefreshTokens = AsyncHandler(async (userId) => {
-  const user = await userModel.findById(userId).select("-password -refreshToken")
+const generateAccessAndRefreshTokens = async (userId) => {
+  const user = await userModel.findById(userId).select("-password -refreshToken");
 
   if (!user) {
-    throw new ApiError(404, "User does not exist")
+    throw new ApiError(404, "User does not exist");
   }
 
-  const accessToken = user.generateAccessToken()
-  const refreshToken = user.generateRefreshToken()
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
 
   user.refreshToken = refreshToken;
-  await user.save()
-    .catch((error) => {
-      throw new ApiError(500, "Failed to add refresh token")
-    })
-
-  return { accessToken, refreshToken }
-})
+  await user.save().catch((error) => {
+    throw new ApiError(500, "Failed to add refresh token");
+  });
+  return { accessToken, refreshToken };
+};
 
 const registerUser = AsyncHandler(async (req, res) => {
   const { name, username, password, mail } = req.body;
@@ -68,9 +66,8 @@ const registerUser = AsyncHandler(async (req, res) => {
 
 const signIn = AsyncHandler(async (req, res) => {
   const { username, mail, password } = req.body
-
-  if (!username || !mail) {
-    throw new ApiError(400, "SignIn Error: username or email required")
+  if (!username && !mail) {
+    throw new ApiError(400, "SignIn Error username or email required")
   }
 
   const user = await userModel.findOne({
@@ -81,7 +78,7 @@ const signIn = AsyncHandler(async (req, res) => {
   })
 
   if (!user) {
-    throw new ApiError(404, "user doesn't exist")
+    throw new ApiError(404, "user does not exist")
   }
 
   const passwordVerified = await user.checkPassword(password)
@@ -90,7 +87,7 @@ const signIn = AsyncHandler(async (req, res) => {
     throw new ApiError(401, "Failed to sign in due to invalid credentials")
   }
 
-  const { accessToken, refreshToken } = generateAccessAndRefreshTokens(user._id)
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
 
   const loggedInUser = await userModel.findById(user._id).select("-password -refreshToken")
 
@@ -107,11 +104,13 @@ const signOut = AsyncHandler(async (req, res) => {
     { _id: req.user._id },
     {
       $set: {
-        refreshToken: undefined
+        refreshToken: null
       }
     },
     { new: true }
-  )
+  ).catch((error)=>{
+    throw new ApiError(500,error?.message)
+  })
 
   res.status(200)
     .clearCookie("accessToken", cookieConfig)
