@@ -26,26 +26,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  bio: {
-    type: String,
-    default: null
-  },
-  dob: {
-    type: Date,
-    default: null
-  },
-  posts: [
-    {
-      type: mongoose.Types.ObjectId,
-      ref: "Post"
-    }
-  ],
-  liked: [
-    {
-      type: mongoose.Types.ObjectId,
-      ref: "Post"
-    }
-  ],
   profilePicture: {
     type: String
   },

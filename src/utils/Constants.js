@@ -1,4 +1,4 @@
-export const DB_NAME = "treo"
+export const DB_NAME = "codecraft"
 
 export const cookieConfig = {
   httpOnly: true,
